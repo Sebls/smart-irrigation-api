@@ -147,3 +147,15 @@ cython_debug/
 
 # MacOS
 .DS_Store
+
+# Testing
+/scratch_test_*
+/test_schema.db
+.idea/
+.vscode/
+.pytest_cache/
+.mypy_cache/
+
+# Documentation
+/docs/build/_build/
+/pysqlite_test_schema.db

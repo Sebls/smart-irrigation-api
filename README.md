@@ -17,33 +17,56 @@ The API is intended to be consumed by a frontend dashboard and other services; i
 This project uses a modular FastAPI layout that scales well as the codebase grows.
 
 ```text
+alembic/                   # Alembic migrations
+  env.py
+  versions/                # Alembic versions
+alembic.ini
 app/
   __init__.py
-  api/                 # API layer (FastAPI entrypoint, routers, schemas, services)
+  main.py                  # Application entrypoint (imports API app)
+  api/                      # API layer (FastAPI app factory + routers/schemas/services)
     __init__.py
-    main.py            # FastAPI app factory + router registration
-    dependencies.py    # Shared dependencies (e.g., DB session)
-    routers/           # Public routers
+    main.py
+    dependencies.py         # Shared dependencies (e.g., DB session)
+    routers/
       __init__.py
-    schemas/           # Pydantic schemas (request/response models)
+    schemas/
       __init__.py
-    services/          # Business logic (called by routes)
+    services/
       __init__.py
-  infrastructure/      # Infrastructure layer (config/security/db/models)
+  config/                   # App-level configuration package
+    __init__.py
+  infrastructure/           # Infrastructure layer (config/security/db/models)
     __init__.py
     config.py
     security.py
-    models/            # SQLAlchemy models
+    db/                     # Database engine/session setup + migrations placeholder
       __init__.py
-    db/                # Database engine/session setup + migrations placeholder
-      __init__.py
+      base.py
       database.py
       migrations/
         README.md
+    models/                 # SQLAlchemy models
+      __init__.py
+      _mixins.py
+      activity.py
+      irrigation.py
+      plants.py
+      sensor_readings.py
+      sensors.py
+      water.py
+      zones.py
+docs/                      # API + DB documentation
 tests/
   __init__.py
   conftest.py
   test_main.py
+  config/
+    test_config.py
+  infrastructure/
+    test_config_shim.py
+    test_database.py
+    test_security.py
 requirements.txt
 run.sh
 smart_irrigation.db
