@@ -93,6 +93,30 @@ source venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
+### Alembic (database migrations)
+
+Alembic uses `DATABASE_URL` from your environment (or a local `.env`) via `app/config/__init__.py`.
+
+```bash
+# optional: point migrations at a different DB (default is sqlite:///./smart_irrigation.db)
+export DATABASE_URL="sqlite:///./smart_irrigation.db"
+
+# show current revision
+alembic current
+
+# show migration history
+alembic history
+
+# create a new migration from model changes
+alembic revision --autogenerate -m "describe change"
+
+# apply migrations
+alembic upgrade head
+
+# rollback one migration
+alembic downgrade -1
+```
+
 ### Run the API (development)
 
 ```bash
