@@ -19,36 +19,31 @@ This project uses a modular FastAPI layout that scales well as the codebase grow
 ```text
 app/
   __init__.py
-  main.py              # FastAPI app factory + router registration
-  dependencies.py      # Shared dependencies
-  routers/             # Public routers
+  api/                 # API layer (FastAPI entrypoint, routers, schemas, services)
     __init__.py
-    items.py
-  internal/            # Internal/non-public routers
-    __init__.py
-  core/                # Configuration + security helpers
+    main.py            # FastAPI app factory + router registration
+    dependencies.py    # Shared dependencies (e.g., DB session)
+    routers/           # Public routers
+      __init__.py
+    schemas/           # Pydantic schemas (request/response models)
+      __init__.py
+    services/          # Business logic (called by routes)
+      __init__.py
+  infrastructure/      # Infrastructure layer (config/security/db/models)
     __init__.py
     config.py
     security.py
-  models/              # SQLAlchemy models
-    __init__.py
-    item.py
-  schemas/             # Pydantic schemas (request/response models)
-    __init__.py
-    item.py
-  services/            # Business logic (called by routes)
-    __init__.py
-    item_service.py
-  db/                  # Database engine/session setup + migrations placeholder
-    __init__.py
-    database.py
-    migrations/
-      README.md
+    models/            # SQLAlchemy models
+      __init__.py
+    db/                # Database engine/session setup + migrations placeholder
+      __init__.py
+      database.py
+      migrations/
+        README.md
 tests/
   __init__.py
   conftest.py
   test_main.py
-  test_items.py
 requirements.txt
 run.sh
 smart_irrigation.db
@@ -56,8 +51,8 @@ smart_irrigation.db
 
 Notes:
 
-- **Minimal API implemented**: `GET /items/` and `POST /items/` are implemented in `app/routers/items.py`.
-- **SQLite by default**: if `DATABASE_URL` is not set, the default is `sqlite:///./smart_irrigation.db`.
+- **Database URL via env**: set `DATABASE_URL` in `.env` (not committed) or environment variables.
+- **SQLite fallback**: if `DATABASE_URL` is not set, the default is `sqlite:///./smart_irrigation.db` for local dev.
 - **Env file**: create your own `.env` locally (no template included in this repo).
 
 ## Commands
