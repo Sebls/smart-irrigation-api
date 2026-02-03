@@ -5,7 +5,9 @@ import dotenv
 import pytest
 
 
-def _import_fresh_config(monkeypatch: pytest.MonkeyPatch, *, env: dict[str, str] | None = None) -> object:
+def _import_fresh_config(
+    monkeypatch: pytest.MonkeyPatch, *, env: dict[str, str] | None = None
+) -> object:
     """
     Import `app.config` fresh after setting env and disabling `.env` auto-loading,
     so tests are deterministic and isolated.
@@ -19,10 +21,13 @@ def _import_fresh_config(monkeypatch: pytest.MonkeyPatch, *, env: dict[str, str]
             monkeypatch.setenv(k, v)
 
     # Drop cached modules to force re-evaluation of module-level constants.
+    sys.modules.pop("app.config.env", None)
     sys.modules.pop("app.config", None)
 
     import app.config  # noqa: WPS433 (import inside function for controlled reload)
+    import app.config.env
 
+    importlib.reload(app.config.env)
     return importlib.reload(app.config)
 
 
@@ -54,7 +59,9 @@ def test_config_defaults_when_env_missing(monkeypatch: pytest.MonkeyPatch) -> No
         ("   ", False),
     ],
 )
-def test_sql_echo_parsing(monkeypatch: pytest.MonkeyPatch, raw: str, expected: bool) -> None:
+def test_sql_echo_parsing(
+    monkeypatch: pytest.MonkeyPatch, raw: str, expected: bool
+) -> None:
     cfg = _import_fresh_config(
         monkeypatch,
         env={
@@ -63,4 +70,3 @@ def test_sql_echo_parsing(monkeypatch: pytest.MonkeyPatch, raw: str, expected: b
     )
 
     assert cfg.SQL_ECHO is expected
-
