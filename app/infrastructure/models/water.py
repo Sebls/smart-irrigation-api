@@ -11,20 +11,20 @@ from app.infrastructure.db.base import Base
 from app.infrastructure.models._mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
 
 
-class WaterTank(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin):
+class WaterTankModel(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "water_tanks"
 
     name: Mapped[str] = mapped_column(String, nullable=False)
     capacity_liters: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    readings: Mapped[list["WaterTankReading"]] = relationship(back_populates="tank")
-    consumption_daily: Mapped[list["WaterConsumptionDaily"]] = relationship(back_populates="tank")
-    usage_hourly: Mapped[list["WaterUsageHourly"]] = relationship(back_populates="tank")
+    readings: Mapped[list["WaterTankReadingModel"]] = relationship(back_populates="tank")
+    consumption_daily: Mapped[list["WaterConsumptionDailyModel"]] = relationship(back_populates="tank")
+    usage_hourly: Mapped[list["WaterUsageHourlyModel"]] = relationship(back_populates="tank")
 
     __table_args__ = (Index("idx_water_tanks_deleted_at", "deleted_at"),)
 
 
-class WaterTankReading(Base, UUIDPrimaryKeyMixin):
+class WaterTankReadingModel(Base, UUIDPrimaryKeyMixin):
     __tablename__ = "water_tank_readings"
 
     tank_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("water_tanks.id"), nullable=False)
@@ -32,7 +32,7 @@ class WaterTankReading(Base, UUIDPrimaryKeyMixin):
     level_percent: Mapped[object] = mapped_column(Numeric(5, 2), nullable=False)
     current_liters: Mapped[object] = mapped_column(Numeric(12, 2), nullable=False)
 
-    tank: Mapped["WaterTank"] = relationship(back_populates="readings")
+    tank: Mapped["WaterTankModel"] = relationship(back_populates="readings")
 
     __table_args__ = (
         CheckConstraint("level_percent >= 0 and level_percent <= 100", name="ck_water_tank_level_percent"),
@@ -41,14 +41,14 @@ class WaterTankReading(Base, UUIDPrimaryKeyMixin):
     )
 
 
-class WaterConsumptionDaily(Base, UUIDPrimaryKeyMixin):
+class WaterConsumptionDailyModel(Base, UUIDPrimaryKeyMixin):
     __tablename__ = "water_consumption_daily"
 
     tank_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("water_tanks.id"), nullable=False)
     day: Mapped[date] = mapped_column(Date, nullable=False)
     amount_liters: Mapped[object] = mapped_column(Numeric(12, 2), nullable=False)
 
-    tank: Mapped["WaterTank"] = relationship(back_populates="consumption_daily")
+    tank: Mapped["WaterTankModel"] = relationship(back_populates="consumption_daily")
 
     __table_args__ = (
         CheckConstraint("amount_liters >= 0", name="ck_consumption_amount_nonnegative"),
@@ -57,7 +57,7 @@ class WaterConsumptionDaily(Base, UUIDPrimaryKeyMixin):
     )
 
 
-class WaterUsageHourly(Base, UUIDPrimaryKeyMixin):
+class WaterUsageHourlyModel(Base, UUIDPrimaryKeyMixin):
     __tablename__ = "water_usage_hourly"
 
     tank_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("water_tanks.id"), nullable=False)
@@ -65,7 +65,7 @@ class WaterUsageHourly(Base, UUIDPrimaryKeyMixin):
     hour: Mapped[int] = mapped_column(Integer, nullable=False)
     usage_liters: Mapped[object] = mapped_column(Numeric(12, 2), nullable=False)
 
-    tank: Mapped["WaterTank"] = relationship(back_populates="usage_hourly")
+    tank: Mapped["WaterTankModel"] = relationship(back_populates="usage_hourly")
 
     __table_args__ = (
         CheckConstraint("hour >= 0 and hour <= 23", name="ck_usage_hour_range"),
@@ -75,14 +75,14 @@ class WaterUsageHourly(Base, UUIDPrimaryKeyMixin):
     )
 
 
-class ZoneWaterUsageDaily(Base, UUIDPrimaryKeyMixin):
+class ZoneWaterUsageDailyModel(Base, UUIDPrimaryKeyMixin):
     __tablename__ = "zone_water_usage_daily"
 
     zone_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("zones.id"), nullable=False)
     day: Mapped[date] = mapped_column(Date, nullable=False)
     water_usage_liters: Mapped[object] = mapped_column(Numeric(12, 2), nullable=False)
 
-    zone: Mapped["Zone"] = relationship(back_populates="zone_water_usage_daily")
+    zone: Mapped["ZoneModel"] = relationship(back_populates="zone_water_usage_daily")
 
     __table_args__ = (
         CheckConstraint("water_usage_liters >= 0", name="ck_zone_water_usage_nonnegative"),

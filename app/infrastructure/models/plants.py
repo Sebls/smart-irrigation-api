@@ -9,7 +9,7 @@ from app.infrastructure.db.base import Base
 from app.infrastructure.models._mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
 
 
-class Plant(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin):
+class PlantModel(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "plants"
 
     zone_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("zones.id"), nullable=False)
@@ -17,10 +17,10 @@ class Plant(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin):
     image_url: Mapped[str | None] = mapped_column(String, nullable=True)
     health: Mapped[str] = mapped_column(String, nullable=False)
 
-    zone: Mapped["Zone"] = relationship(back_populates="plants")
-    sensors: Mapped[list["Sensor"]] = relationship(back_populates="plant")
-    irrigation_jobs: Mapped[list["IrrigationJob"]] = relationship(back_populates="plant")
-    activity_events: Mapped[list["ActivityEvent"]] = relationship(back_populates="plant")
+    zone: Mapped["ZoneModel"] = relationship(back_populates="plants")
+    sensors: Mapped[list["SensorModel"]] = relationship(back_populates="plant")
+    irrigation_jobs: Mapped[list["IrrigationJobModel"]] = relationship(back_populates="plant")
+    activity_events: Mapped[list["ActivityEventModel"]] = relationship(back_populates="plant")
 
     __table_args__ = (
         CheckConstraint(
