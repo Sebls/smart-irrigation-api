@@ -11,7 +11,7 @@ from app.infrastructure.db.base import Base
 from app.infrastructure.models._mixins import UUIDPrimaryKeyMixin
 
 
-class IrrigationJob(Base, UUIDPrimaryKeyMixin):
+class IrrigationJobModel(Base, UUIDPrimaryKeyMixin):
     __tablename__ = "irrigation_jobs"
 
     scope: Mapped[str] = mapped_column(String, nullable=False)
@@ -27,8 +27,8 @@ class IrrigationJob(Base, UUIDPrimaryKeyMixin):
     ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     error_message: Mapped[str | None] = mapped_column(String, nullable=True)
 
-    zone: Mapped["Zone | None"] = relationship(back_populates="irrigation_jobs")
-    plant: Mapped["Plant | None"] = relationship(back_populates="irrigation_jobs")
+    zone: Mapped["ZoneModel | None"] = relationship(back_populates="irrigation_jobs")
+    plant: Mapped["PlantModel | None"] = relationship(back_populates="irrigation_jobs")
 
     __table_args__ = (
         CheckConstraint("scope in ('zone','plant')", name="ck_irrigation_jobs_scope"),
