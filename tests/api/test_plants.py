@@ -89,7 +89,7 @@ def created_plant(db_session, created_zone):
 
 def test_create_plant(client, created_zone):
     response = client.post(
-        "/plants/",
+        "/api/v1/plants/",
         json={
             "name": "New Plant",
             "zone_id": str(created_zone.id),
@@ -105,7 +105,7 @@ def test_create_plant(client, created_zone):
 
 
 def test_read_plants(client, created_plant):
-    response = client.get("/plants/")
+    response = client.get("/api/v1/plants/")
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
@@ -116,7 +116,7 @@ def test_read_plants(client, created_plant):
 
 
 def test_read_plant(client, created_plant):
-    response = client.get(f"/plants/{created_plant.id}")
+    response = client.get(f"/api/v1/plants/{created_plant.id}")
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == str(created_plant.id)
@@ -125,7 +125,7 @@ def test_read_plant(client, created_plant):
 
 def test_update_plant(client, created_plant):
     new_name = "Updated Plant Name"
-    response = client.put(f"/plants/{created_plant.id}", json={"name": new_name})
+    response = client.put(f"/api/v1/plants/{created_plant.id}", json={"name": new_name})
     assert response.status_code == 200
     data = response.json()
     assert data["name"] == new_name
@@ -133,19 +133,19 @@ def test_update_plant(client, created_plant):
 
 
 def test_delete_plant(client, created_plant):
-    response = client.delete(f"/plants/{created_plant.id}")
+    response = client.delete(f"/api/v1/plants/{created_plant.id}")
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == str(created_plant.id)
 
     # Verify lookup fails
-    response = client.get(f"/plants/{created_plant.id}")
+    response = client.get(f"/api/v1/plants/{created_plant.id}")
     assert response.status_code == 404
 
 
 def test_create_plant_invalid_zone(client):
     response = client.post(
-        "/plants/",
+        "/api/v1/plants/",
         json={
             "name": "Invalid Zone Plant",
             "zone_id": str(uuid.uuid4()),

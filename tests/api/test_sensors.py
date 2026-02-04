@@ -86,7 +86,7 @@ def created_sensor(db_session, created_zone):
 
 def test_create_sensor(client, created_zone):
     response = client.post(
-        "/sensors/",
+        "/api/v1/sensors/",
         json={
             "name": "New Sensor",
             "type": "temperature",
@@ -103,7 +103,7 @@ def test_create_sensor(client, created_zone):
 
 
 def test_read_sensors(client, created_sensor):
-    response = client.get("/sensors/")
+    response = client.get("/api/v1/sensors/")
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
@@ -113,7 +113,7 @@ def test_read_sensors(client, created_sensor):
 
 
 def test_read_sensor(client, created_sensor):
-    response = client.get(f"/sensors/{created_sensor.id}")
+    response = client.get(f"/api/v1/sensors/{created_sensor.id}")
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == str(created_sensor.id)
@@ -122,7 +122,9 @@ def test_read_sensor(client, created_sensor):
 
 def test_update_sensor(client, created_sensor):
     new_name = "Updated Sensor Name"
-    response = client.put(f"/sensors/{created_sensor.id}", json={"name": new_name})
+    response = client.put(
+        f"/api/v1/sensors/{created_sensor.id}", json={"name": new_name}
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["name"] == new_name
@@ -130,14 +132,14 @@ def test_update_sensor(client, created_sensor):
 
 
 def test_delete_sensor(client, created_sensor):
-    response = client.delete(f"/sensors/{created_sensor.id}")
+    response = client.delete(f"/api/v1/sensors/{created_sensor.id}")
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == str(created_sensor.id)
     assert data["deleted_at"] is not None
 
     # Verify lookup fails
-    response = client.get(f"/sensors/{created_sensor.id}")
+    response = client.get(f"/api/v1/sensors/{created_sensor.id}")
     assert response.status_code == 404
 
 
@@ -145,7 +147,7 @@ def test_create_sensor_invalid_parent(client):
     # Should fail if neither plant_id nor zone_id is provided, OR both are provided.
     # The model has a check constraint: ((plant_id is not null) + (zone_id is not null)) = 1
     response = client.post(
-        "/sensors/",
+        "/api/v1/sensors/",
         json={
             "name": "Invalid Sensor",
             "type": "temperature",

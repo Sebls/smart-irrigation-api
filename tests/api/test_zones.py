@@ -70,7 +70,7 @@ def created_zone(db_session):
 
 def test_create_zone(client):
     response = client.post(
-        "/zones/",
+        "/api/v1/zones/",
         json={"name": "New Zone", "is_active": True},
     )
     assert response.status_code == 201
@@ -81,7 +81,7 @@ def test_create_zone(client):
 
 
 def test_read_zones(client, created_zone):
-    response = client.get("/zones/")
+    response = client.get("/api/v1/zones/")
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
@@ -91,7 +91,7 @@ def test_read_zones(client, created_zone):
 
 
 def test_read_zone(client, created_zone):
-    response = client.get(f"/zones/{created_zone.id}")
+    response = client.get(f"/api/v1/zones/{created_zone.id}")
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == str(created_zone.id)
@@ -100,7 +100,7 @@ def test_read_zone(client, created_zone):
 
 def test_update_zone(client, created_zone):
     new_name = "Updated Zone Name"
-    response = client.put(f"/zones/{created_zone.id}", json={"name": new_name})
+    response = client.put(f"/api/v1/zones/{created_zone.id}", json={"name": new_name})
     assert response.status_code == 200
     data = response.json()
     assert data["name"] == new_name
@@ -108,12 +108,12 @@ def test_update_zone(client, created_zone):
 
 
 def test_delete_zone(client, created_zone):
-    response = client.delete(f"/zones/{created_zone.id}")
+    response = client.delete(f"/api/v1/zones/{created_zone.id}")
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == str(created_zone.id)
     assert data["deleted_at"] is not None
 
     # Verify lookup fails (soft delete)
-    response = client.get(f"/zones/{created_zone.id}")
+    response = client.get(f"/api/v1/zones/{created_zone.id}")
     assert response.status_code == 404

@@ -101,7 +101,7 @@ def created_reading(db_session, created_sensor):
 
 def test_create_sensor_reading(client, created_sensor):
     response = client.post(
-        "/sensor-readings/",
+        "/api/v1/sensor-readings/",
         json={
             "sensor_id": str(created_sensor.id),
             "value": 30.2,
@@ -115,7 +115,7 @@ def test_create_sensor_reading(client, created_sensor):
 
 
 def test_read_sensor_readings(client, created_reading):
-    response = client.get("/sensor-readings/")
+    response = client.get("/api/v1/sensor-readings/")
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
@@ -125,7 +125,9 @@ def test_read_sensor_readings(client, created_reading):
 
 
 def test_read_sensor_readings_by_sensor(client, created_reading):
-    response = client.get(f"/sensor-readings/?sensor_id={created_reading.sensor_id}")
+    response = client.get(
+        f"/api/v1/sensor-readings/?sensor_id={created_reading.sensor_id}"
+    )
     assert response.status_code == 200
     data = response.json()
     assert len(data) >= 1
@@ -133,7 +135,7 @@ def test_read_sensor_readings_by_sensor(client, created_reading):
 
 
 def test_read_sensor_reading(client, created_reading):
-    response = client.get(f"/sensor-readings/{created_reading.id}")
+    response = client.get(f"/api/v1/sensor-readings/{created_reading.id}")
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == str(created_reading.id)
@@ -141,11 +143,11 @@ def test_read_sensor_reading(client, created_reading):
 
 
 def test_delete_sensor_reading(client, created_reading):
-    response = client.delete(f"/sensor-readings/{created_reading.id}")
+    response = client.delete(f"/api/v1/sensor-readings/{created_reading.id}")
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == str(created_reading.id)
 
     # Verify lookup fails
-    response = client.get(f"/sensor-readings/{created_reading.id}")
+    response = client.get(f"/api/v1/sensor-readings/{created_reading.id}")
     assert response.status_code == 404

@@ -86,7 +86,7 @@ def created_event(db_session, created_zone):
 
 def test_create_activity_event(client, created_zone):
     response = client.post(
-        "/activity/",
+        "/api/v1/activity/",
         json={
             "type": "warning",
             "message": "Low water level",
@@ -101,7 +101,7 @@ def test_create_activity_event(client, created_zone):
 
 
 def test_read_activity_events(client, created_event):
-    response = client.get("/activity/")
+    response = client.get("/api/v1/activity/")
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
@@ -111,7 +111,7 @@ def test_read_activity_events(client, created_event):
 
 
 def test_read_activity_events_filter(client, created_event):
-    response = client.get(f"/activity/?type={created_event.type}")
+    response = client.get(f"/api/v1/activity/?type={created_event.type}")
     assert response.status_code == 200
     data = response.json()
     assert len(data) >= 1
@@ -119,7 +119,7 @@ def test_read_activity_events_filter(client, created_event):
 
 
 def test_read_activity_event(client, created_event):
-    response = client.get(f"/activity/{created_event.id}")
+    response = client.get(f"/api/v1/activity/{created_event.id}")
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == str(created_event.id)
@@ -127,11 +127,11 @@ def test_read_activity_event(client, created_event):
 
 
 def test_delete_activity_event(client, created_event):
-    response = client.delete(f"/activity/{created_event.id}")
+    response = client.delete(f"/api/v1/activity/{created_event.id}")
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == str(created_event.id)
 
     # Verify lookup fails
-    response = client.get(f"/activity/{created_event.id}")
+    response = client.get(f"/api/v1/activity/{created_event.id}")
     assert response.status_code == 404

@@ -87,7 +87,7 @@ def created_reading(db_session, created_tank):
 # Tank Tests
 def test_create_tank(client):
     response = client.post(
-        "/water/tanks/",
+        "/api/v1/water/tanks/",
         json={"name": "New Tank", "capacity_liters": 500},
     )
     assert response.status_code == 201
@@ -98,7 +98,7 @@ def test_create_tank(client):
 
 
 def test_read_tanks(client, created_tank):
-    response = client.get("/water/tanks/")
+    response = client.get("/api/v1/water/tanks/")
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
@@ -109,14 +109,16 @@ def test_read_tanks(client, created_tank):
 
 def test_update_tank(client, created_tank):
     new_name = "Updated Tank Name"
-    response = client.put(f"/water/tanks/{created_tank.id}", json={"name": new_name})
+    response = client.put(
+        f"/api/v1/water/tanks/{created_tank.id}", json={"name": new_name}
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["name"] == new_name
 
 
 def test_delete_tank(client, created_tank):
-    response = client.delete(f"/water/tanks/{created_tank.id}")
+    response = client.delete(f"/api/v1/water/tanks/{created_tank.id}")
     assert response.status_code == 200
     assert response.json()["deleted_at"] is not None
 
@@ -124,7 +126,7 @@ def test_delete_tank(client, created_tank):
 # Reading Tests
 def test_create_tank_reading(client, created_tank):
     response = client.post(
-        "/water/readings/",
+        "/api/v1/water/readings/",
         json={
             "tank_id": str(created_tank.id),
             "level_percent": "75.0",
@@ -140,7 +142,7 @@ def test_create_tank_reading(client, created_tank):
 
 
 def test_read_tank_readings(client, created_reading):
-    response = client.get(f"/water/readings/?tank_id={created_reading.tank_id}")
+    response = client.get(f"/api/v1/water/readings/?tank_id={created_reading.tank_id}")
     assert response.status_code == 200
     data = response.json()
     assert len(data) >= 1

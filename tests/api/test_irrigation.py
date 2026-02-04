@@ -88,7 +88,7 @@ def created_job(db_session, created_zone):
 
 def test_create_irrigation_job(client, created_zone):
     response = client.post(
-        "/irrigation/",
+        "/api/v1/irrigation/",
         json={
             "scope": "zone",
             "zone_id": str(created_zone.id),
@@ -104,7 +104,7 @@ def test_create_irrigation_job(client, created_zone):
 
 
 def test_read_irrigation_jobs(client, created_job):
-    response = client.get("/irrigation/")
+    response = client.get("/api/v1/irrigation/")
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
@@ -115,18 +115,20 @@ def test_read_irrigation_jobs(client, created_job):
 
 def test_update_irrigation_job(client, created_job):
     new_status = "running"
-    response = client.put(f"/irrigation/{created_job.id}", json={"status": new_status})
+    response = client.put(
+        f"/api/v1/irrigation/{created_job.id}", json={"status": new_status}
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == new_status
 
 
 def test_delete_irrigation_job(client, created_job):
-    response = client.delete(f"/irrigation/{created_job.id}")
+    response = client.delete(f"/api/v1/irrigation/{created_job.id}")
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == str(created_job.id)
 
     # Verify lookup fails
-    response = client.get(f"/irrigation/{created_job.id}")
+    response = client.get(f"/api/v1/irrigation/{created_job.id}")
     assert response.status_code == 404
