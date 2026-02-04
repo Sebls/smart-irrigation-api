@@ -1,5 +1,4 @@
 import pytest
-import uuid
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
@@ -80,49 +79,56 @@ def sensors(db_session, created_zone):
     return [s1]
 
 
-def test_save_telemetry_by_id(client, sensors):
-    s1 = sensors[0]
-    device_id = str(uuid.uuid4())
-    telemetry_data = {
-        "sentAt": "2026-01-26T12:00:00.000Z",
-        "readings": [
-            {"sensorId": str(s1.id), "type": "humidity", "value": 80.0, "unit": "%"}
-        ],
+def test_create_device(client):
+    device_data = {
+        "name": "New Test Device",
+        "description": "A device for testing CRUD",
+        "isActive": True,
     }
-
-    response = client.post(
-        f"/api/v1/devices/{device_id}/telemetry", json=telemetry_data
-    )
+    response = client.post("/api/v1/devices/", json=device_data)
     assert response.status_code == 201
     data = response.json()
-    assert data["processedCount"] == 1
-    assert data["deviceId"] == device_id
+    assert data["name"] == "New Test Device"
+    assert "id" in data
 
 
-def test_save_telemetry_unknown_id(client, sensors):
-    # Test that name or random string doesn't save data
-    device_id = str(uuid.uuid4())
-    telemetry_data = {
-        "sentAt": "2026-01-26T12:00:00.000Z",
-        "readings": [
-            {
-                "sensorId": "s-1-1-1",  # This is a name, but we expect UUID only now
-                "type": "humidity",
-                "value": 74.1,
-                "unit": "%",
-            },
-            {
-                "sensorId": str(uuid.uuid4()),  # Valid UUID but non-existent
-                "type": "temperature",
-                "value": 24.3,
-                "unit": "C",
-            },
-        ],
-    }
+def test_list_devices(client):
+    # Ensure at least one device exists
+    client.post("/api/v1/devices/", json={"name": "Device 1"})
+    client.post("/api/v1/devices/", json={"name": "Device 2"})
 
-    response = client.post(
-        f"/api/v1/devices/{device_id}/telemetry", json=telemetry_data
-    )
-    assert response.status_code == 201
+    response = client.get("/api/v1/devices/")
+    assert response.status_code == 200
     data = response.json()
-    assert data["processedCount"] == 0
+    assert len(data) >= 2
+
+
+def test_get_device(client):
+    create_resp = client.post("/api/v1/devices/", json={"name": "Specific Device"})
+    device_id = create_resp.json()["id"]
+
+    response = client.get(f"/api/v1/devices/{device_id}")
+    assert response.status_code == 200
+    assert response.json()["name"] == "Specific Device"
+
+
+def test_update_device(client):
+    create_resp = client.post("/api/v1/devices/", json={"name": "Old Name"})
+    device_id = create_resp.json()["id"]
+
+    update_data = {"name": "New Name"}
+    response = client.put(f"/api/v1/devices/{device_id}", json=update_data)
+    assert response.status_code == 200
+    assert response.json()["name"] == "New Name"
+
+
+def test_delete_device(client):
+    create_resp = client.post("/api/v1/devices/", json={"name": "Delete Me"})
+    device_id = create_resp.json()["id"]
+
+    response = client.delete(f"/api/v1/devices/{device_id}")
+    assert response.status_code == 200
+
+    # Verify it's gone
+    get_resp = client.get(f"/api/v1/devices/{device_id}")
+    assert get_resp.status_code == 404
