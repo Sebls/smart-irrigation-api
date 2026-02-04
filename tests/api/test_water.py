@@ -3,7 +3,6 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-import uuid
 from datetime import datetime
 from decimal import Decimal
 

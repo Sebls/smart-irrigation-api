@@ -3,7 +3,6 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-import uuid
 
 from app.main import app
 from app.infrastructure.db.base import Base
