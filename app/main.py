@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from app.config import API_VERSION
+from fastapi import FastAPI, APIRouter
 from app.api.routers import (
     plants,
     zones,
@@ -13,13 +14,17 @@ from app.api.routers import (
 def create_app() -> FastAPI:
     app = FastAPI(title="smart-irrigation-api")
 
-    app.include_router(plants.router)
-    app.include_router(zones.router)
-    app.include_router(sensors.router)
-    app.include_router(sensor_readings.router)
-    app.include_router(activity.router)
-    app.include_router(water.router)
-    app.include_router(irrigation.router)
+    api_router = APIRouter(prefix=f"/api/{API_VERSION}")
+
+    api_router.include_router(plants.router)
+    api_router.include_router(zones.router)
+    api_router.include_router(sensors.router)
+    api_router.include_router(sensor_readings.router)
+    api_router.include_router(activity.router)
+    api_router.include_router(water.router)
+    api_router.include_router(irrigation.router)
+
+    app.include_router(api_router)
 
     return app
 
