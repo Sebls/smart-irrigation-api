@@ -149,18 +149,19 @@ def test_save_image(client):
     import shutil
 
     device_id = str(uuid.uuid4())
-    # Small valid base64 for a 1x1 pixel image
-    base64_img = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+    # Create a small dummy image
+    image_content = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
 
-    image_data = {
-        "imageBase64": base64_img,
+    form_data = {
         "type": "tank",
-        "capturedAt": "2026-02-04T12:05:00Z",
-        "metadata": {"quality": "high"},
+        "captured_at": "2026-02-04T12:05:00Z",
+        "metadata": '{"quality": "high"}',
     }
 
+    files = {"file": ("test.jpg", image_content, "image/jpeg")}
+
     response = client.post(
-        f"/api/v1/external-devices/{device_id}/images", json=image_data
+        f"/api/v1/external-devices/{device_id}/images", data=form_data, files=files
     )
     assert response.status_code == 201
     data = response.json()
