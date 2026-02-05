@@ -3,12 +3,12 @@ import logging
 import uuid
 from datetime import datetime
 from sqlalchemy.orm import Session
+from fastapi import UploadFile
 from app.api.schemas.devices import (
     TelemetryRequest,
     TelemetryResponse,
     DeviceLogCreate,
     DeviceLogResponse,
-    DeviceImageCreate,
     DeviceImageResponse,
     DeviceStatusResponse,
     DeviceCreate,
@@ -115,9 +115,15 @@ def save_log(
 
 
 def save_image(
-    db: Session, device_id: uuid.UUID, request: DeviceImageCreate
+    db: Session,
+    device_id: uuid.UUID,
+    image_file: UploadFile,
+    image_type: str,
+    captured_at: datetime,
+    plant_id: uuid.UUID | None = None,
+    zone_id: uuid.UUID | None = None,
+    metadata: dict | None = None,
 ) -> DeviceImageResponse:
-    import base64
     import os
 
     _get_or_create_device(db, device_id)
@@ -125,19 +131,12 @@ def save_image(
     # 1. Prepare Storage
     upload_dir = os.path.join("uploads", "devices", str(device_id))
     os.makedirs(upload_dir, exist_ok=True)
-    file_path = os.path.join(upload_dir, f"{request.type}.jpg")
+    file_path = os.path.join(upload_dir, f"{image_type}.jpg")
 
-    # 2. Decode and Save Image
+    # 2. Save Image File
     try:
-        # Handle data:image/jpeg;base64,... prefix if present
-        header = "base64,"
-        if header in request.image_base64:
-            image_data = request.image_base64.split(header)[1]
-        else:
-            image_data = request.image_base64
-
         with open(file_path, "wb") as f:
-            f.write(base64.b64decode(image_data))
+            f.write(image_file.file.read())
     except Exception as e:
         logger.error(f"Failed to save image to disk: {str(e)}")
         raise e
@@ -147,28 +146,26 @@ def save_image(
         db.query(DeviceImageModel)
         .filter(
             DeviceImageModel.device_id == device_id,
-            DeviceImageModel.type == request.type,
+            DeviceImageModel.type == image_type,
         )
         .first()
     )
 
     if db_image:
-        db_image.plant_id = request.plant_id
-        db_image.zone_id = request.zone_id
+        db_image.plant_id = plant_id
+        db_image.zone_id = zone_id
         db_image.image_url = file_path
-        db_image.captured_at = request.captured_at
-        db_image.metadata_json = (
-            json.dumps(request.metadata) if request.metadata else None
-        )
+        db_image.captured_at = captured_at
+        db_image.metadata_json = json.dumps(metadata) if metadata else None
     else:
         db_image = DeviceImageModel(
             device_id=device_id,
-            plant_id=request.plant_id,
-            zone_id=request.zone_id,
+            plant_id=plant_id,
+            zone_id=zone_id,
             image_url=file_path,
-            type=request.type,
-            captured_at=request.captured_at,
-            metadata_json=json.dumps(request.metadata) if request.metadata else None,
+            type=image_type,
+            captured_at=captured_at,
+            metadata_json=json.dumps(metadata) if metadata else None,
         )
         db.add(db_image)
 

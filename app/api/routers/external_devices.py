@@ -1,12 +1,13 @@
+import json
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, status
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Form
 from sqlalchemy.orm import Session
 from app.api.schemas.devices import (
     TelemetryRequest,
     TelemetryResponse,
     DeviceLogCreate,
     DeviceLogResponse,
-    DeviceImageCreate,
     DeviceImageResponse,
     DeviceStatusResponse,
 )
@@ -36,10 +37,27 @@ def save_telemetry(
     status_code=status.HTTP_201_CREATED,
 )
 def save_image(
-    device_id: uuid.UUID, request: DeviceImageCreate, db: Session = Depends(get_db)
+    device_id: uuid.UUID,
+    file: UploadFile = File(...),
+    type: str = Form(...),
+    captured_at: datetime = Form(...),
+    plant_id: uuid.UUID | None = Form(None),
+    zone_id: uuid.UUID | None = Form(None),
+    metadata: str | None = Form(None),
+    db: Session = Depends(get_db),
 ):
     try:
-        return devices_service.save_image(db, device_id, request)
+        metadata_dict = json.loads(metadata) if metadata else None
+        return devices_service.save_image(
+            db,
+            device_id,
+            file,
+            type,
+            captured_at,
+            plant_id,
+            zone_id,
+            metadata_dict,
+        )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 

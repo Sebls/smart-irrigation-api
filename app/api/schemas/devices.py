@@ -82,22 +82,6 @@ class DeviceLogResponse(BaseModel):
     recorded_at: datetime
 
 
-class DeviceImageCreate(BaseModel):
-    model_config = ConfigDict(
-        alias_generator=AliasGenerator(
-            validation_alias=to_camel,
-            serialization_alias=to_camel,
-        ),
-        populate_by_name=True,
-    )
-    plant_id: uuid.UUID | None = None
-    zone_id: uuid.UUID | None = None
-    image_base64: str
-    type: str  # plant, tank, zone
-    captured_at: datetime
-    metadata: dict | None = None
-
-
 class DeviceImageResponse(BaseModel):
     model_config = ConfigDict(
         alias_generator=AliasGenerator(
