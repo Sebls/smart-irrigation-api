@@ -4,6 +4,16 @@ import uuid
 from datetime import datetime
 from sqlalchemy.orm import Session
 from fastapi import UploadFile
+from app.infrastructure.models.devices import (
+    DeviceModel,
+    DeviceLogModel,
+    DeviceImageModel,
+)
+from app.infrastructure.models.zones import ZoneModel
+from app.infrastructure.models.water import WaterTankModel
+from app.infrastructure.models.sensors import SensorModel
+from app.api.schemas.sensor_readings import SensorReadingCreate
+from app.api.services import sensor_readings_service
 from app.api.schemas.devices import (
     TelemetryRequest,
     TelemetryResponse,
@@ -14,14 +24,10 @@ from app.api.schemas.devices import (
     DeviceCreate,
     DeviceUpdate,
     Device,
-)
-from app.api.schemas.sensor_readings import SensorReadingCreate
-from app.api.services import sensor_readings_service
-from app.infrastructure.models.sensors import SensorModel
-from app.infrastructure.models.devices import (
-    DeviceModel,
-    DeviceLogModel,
-    DeviceImageModel,
+    ProvisionRequest,
+    ProvisionResponse,
+    ProvisionSensorResponse,
+    ProvisionCameraResponse,
 )
 
 
@@ -259,3 +265,128 @@ def delete_device(db: Session, device_id: uuid.UUID) -> Device | None:
     db.delete(db_device)
     db.commit()
     return Device.model_validate(db_device)
+
+
+def provision_device(db: Session, request: ProvisionRequest) -> ProvisionResponse:
+    # 1. Find or create device by hardware_id
+    device = (
+        db.query(DeviceModel)
+        .filter(DeviceModel.hardware_id == request.hardware_id)
+        .first()
+    )
+
+    if not device:
+        device = DeviceModel(
+            id=uuid.uuid4(),
+            name=f"Device {request.hardware_id[:8]}",
+            hardware_id=request.hardware_id,
+            is_active=True,
+            is_online=True,
+            last_seen_at=datetime.utcnow(),
+        )
+        db.add(device)
+        db.flush()  # Get the ID
+    else:
+        device.last_seen_at = datetime.utcnow()
+        device.is_online = True
+
+    # 2. Ensure default Zone exists for this device
+    # For now, we create a default zone named "Home Zone" if none exists
+    zone = (
+        db.query(ZoneModel)
+        .filter(ZoneModel.name == "Primary Zone", ZoneModel.deleted_at.is_(None))
+        .first()
+    )
+    if not zone:
+        zone = ZoneModel(name="Primary Zone", is_active=True)
+        db.add(zone)
+        db.flush()
+
+    # 3. Ensure Water Tank exists
+    tank = (
+        db.query(WaterTankModel)
+        .filter(WaterTankModel.name == "Main Tank", WaterTankModel.deleted_at.is_(None))
+        .first()
+    )
+    if not tank:
+        tank = WaterTankModel(name="Main Tank", capacity_liters=1000)
+        db.add(tank)
+        db.flush()
+
+    # 4. Register Sensors
+    sensor_responses = []
+    for cap_sensor in request.capabilities.sensors:
+        # Check if sensor already exists (by local name + device/zone context could be complex)
+        # For simplicity in this implementation, we'll look for a sensor by name in this zone
+        db_sensor = (
+            db.query(SensorModel)
+            .filter(
+                SensorModel.name == f"{request.hardware_id}-{cap_sensor.local_name}",
+                SensorModel.zone_id == zone.id,
+                SensorModel.deleted_at.is_(None),
+            )
+            .first()
+        )
+
+        if not db_sensor:
+            unit = (
+                "%"
+                if cap_sensor.type == "humidity"
+                else "L/min"
+                if cap_sensor.type == "flow"
+                else "N/A"
+            )
+            db_sensor = SensorModel(
+                id=uuid.uuid4(),
+                name=f"{request.hardware_id}-{cap_sensor.local_name}",
+                type=cap_sensor.type.value,
+                unit=unit,
+                zone_id=zone.id,
+                is_active=True,
+            )
+            db.add(db_sensor)
+            db.flush()
+
+        sensor_responses.append(
+            ProvisionSensorResponse(
+                local_name=cap_sensor.local_name,
+                sensor_id=db_sensor.id,
+                type=cap_sensor.type,
+                unit=db_sensor.unit,
+            )
+        )
+
+    # 5. Cameras (Metadata only for now)
+    camera_responses = []
+    for cam_name in request.capabilities.cameras:
+        # Check if image metadata already exists
+        db_image = (
+            db.query(DeviceImageModel)
+            .filter(
+                DeviceImageModel.device_id == device.id,
+                DeviceImageModel.type == cam_name,
+            )
+            .first()
+        )
+
+        if not db_image:
+            # We don't have an image yet, but we can register the expectation
+            # For now, let's just return a placeholder UUID if we had a Camera model
+            # Since we only have DeviceImageModel, we'll just skip creating anything in DB for now
+            # but return the names in the response if we had a way to map them.
+            pass
+
+        camera_responses.append(
+            ProvisionCameraResponse(
+                local_name=cam_name,
+                camera_id=uuid.uuid4(),  # Placeholder
+            )
+        )
+
+    db.commit()
+
+    return ProvisionResponse(
+        device_id=device.id,
+        sensors=sensor_responses,
+        cameras=camera_responses,
+    )

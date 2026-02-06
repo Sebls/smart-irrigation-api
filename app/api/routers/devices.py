@@ -6,6 +6,8 @@ from app.api.schemas.devices import (
     Device,
     DeviceCreate,
     DeviceUpdate,
+    ProvisionRequest,
+    ProvisionResponse,
 )
 from app.api.services import devices_service
 from app.api.dependencies import get_db
@@ -50,3 +52,11 @@ def delete_device_endpoint(device_id: uuid.UUID, db: Session = Depends(get_db)):
     if not db_device:
         raise HTTPException(status_code=404, detail="Device not found")
     return db_device
+
+
+@router.post("/provision", response_model=ProvisionResponse)
+def provision_device_endpoint(request: ProvisionRequest, db: Session = Depends(get_db)):
+    try:
+        return devices_service.provision_device(db, request)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

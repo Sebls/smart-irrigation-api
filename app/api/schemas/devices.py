@@ -138,4 +138,84 @@ class Device(BaseModel):
     is_online: bool
     uptime: float | None
     created_at: datetime
+    created_at: datetime
     updated_at: datetime
+
+
+class ProvisionSensor(BaseModel):
+    model_config = ConfigDict(
+        alias_generator=AliasGenerator(
+            validation_alias=to_camel,
+            serialization_alias=to_camel,
+        ),
+        populate_by_name=True,
+    )
+    local_name: str
+    type: SensorType
+
+
+class ProvisionCapabilities(BaseModel):
+    model_config = ConfigDict(
+        alias_generator=AliasGenerator(
+            validation_alias=to_camel,
+            serialization_alias=to_camel,
+        ),
+        populate_by_name=True,
+    )
+    sensors: list[ProvisionSensor]
+    cameras: list[str] = []
+
+
+class ProvisionRequest(BaseModel):
+    model_config = ConfigDict(
+        alias_generator=AliasGenerator(
+            validation_alias=to_camel,
+            serialization_alias=to_camel,
+        ),
+        populate_by_name=True,
+    )
+    hardware_id: str
+    firmware: str
+    capabilities: ProvisionCapabilities
+
+
+class ProvisionSensorResponse(BaseModel):
+    model_config = ConfigDict(
+        alias_generator=AliasGenerator(
+            validation_alias=to_camel,
+            serialization_alias=to_camel,
+        ),
+        populate_by_name=True,
+    )
+    local_name: str
+    sensor_id: uuid.UUID
+    type: SensorType
+    unit: str
+
+
+class ProvisionCameraResponse(BaseModel):
+    model_config = ConfigDict(
+        alias_generator=AliasGenerator(
+            validation_alias=to_camel,
+            serialization_alias=to_camel,
+        ),
+        populate_by_name=True,
+    )
+    local_name: str
+    camera_id: uuid.UUID
+
+
+class ProvisionResponse(BaseModel):
+    model_config = ConfigDict(
+        alias_generator=AliasGenerator(
+            validation_alias=to_camel,
+            serialization_alias=to_camel,
+        ),
+        populate_by_name=True,
+    )
+    device_id: uuid.UUID
+    timezone: str = "Europe/Paris"
+    location: dict | None = None
+    polling: dict = {"telemetryIntervalSec": 60, "heartbeatIntervalSec": 30}
+    sensors: list[ProvisionSensorResponse]
+    cameras: list[ProvisionCameraResponse]
