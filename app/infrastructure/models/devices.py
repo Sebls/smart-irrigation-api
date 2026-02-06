@@ -19,6 +19,7 @@ class DeviceModel(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin):
 
     name: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str | None] = mapped_column(String, nullable=True)
+    hardware_id: Mapped[str | None] = mapped_column(String, unique=True, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="1")
 
     # Liveness and Health
