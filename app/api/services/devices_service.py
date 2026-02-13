@@ -10,7 +10,6 @@ from app.infrastructure.models.devices import (
     DeviceImageModel,
 )
 from app.infrastructure.models.zones import ZoneModel
-from app.infrastructure.models.water import WaterTankModel
 from app.infrastructure.models.sensors import SensorModel
 from app.api.schemas.sensor_readings import SensorReadingCreate
 from app.api.services import sensor_readings_service
@@ -303,17 +302,7 @@ def provision_device(db: Session, request: ProvisionRequest) -> ProvisionRespons
         db.flush()
 
     # 3. Ensure Water Tank exists
-    tank = (
-        db.query(WaterTankModel)
-        .filter(WaterTankModel.name == "Main Tank", WaterTankModel.deleted_at.is_(None))
-        .first()
-    )
-    if not tank:
-        tank = WaterTankModel(name="Main Tank", capacity_liters=1000)
-        db.add(tank)
-        db.flush()
-
-    # 4. Register Sensors
+    # 3. Register Sensors
     sensor_responses = []
     for cap_sensor in request.capabilities.sensors:
         # Check if sensor already exists (by local name + device/zone context could be complex)
@@ -356,7 +345,7 @@ def provision_device(db: Session, request: ProvisionRequest) -> ProvisionRespons
             )
         )
 
-    # 5. Cameras (Metadata only for now)
+    # 4. Cameras (Metadata only for now)
     camera_responses = []
     for cam_name in request.capabilities.cameras:
         # Check if image metadata already exists

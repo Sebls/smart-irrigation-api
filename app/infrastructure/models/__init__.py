@@ -10,13 +10,6 @@ from app.infrastructure.models.sensor_readings import (
     SensorReadingModel as SensorReading,
 )
 from app.infrastructure.models.sensors import SensorModel as Sensor
-from app.infrastructure.models.water import (
-    WaterConsumptionDailyModel as WaterConsumptionDaily,
-    WaterTankModel as WaterTank,
-    WaterTankReadingModel as WaterTankReading,
-    WaterUsageHourlyModel as WaterUsageHourly,
-    ZoneWaterUsageDailyModel as ZoneWaterUsageDaily,
-)
 from app.infrastructure.models.zones import ZoneModel as Zone
 
 __all__ = [
@@ -25,11 +18,6 @@ __all__ = [
     "Plant",
     "Sensor",
     "SensorReading",
-    "WaterTank",
-    "WaterTankReading",
-    "WaterConsumptionDaily",
-    "WaterUsageHourly",
-    "ZoneWaterUsageDaily",
     "Device",
     "DeviceLog",
     "DeviceImage",
