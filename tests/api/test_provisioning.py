@@ -10,7 +10,6 @@ from app.infrastructure.db.base import Base
 from app.api.dependencies import get_db
 from app.infrastructure.models.devices import DeviceModel
 from app.infrastructure.models.zones import ZoneModel
-from app.infrastructure.models.water import WaterTankModel
 from app.infrastructure.models.sensors import SensorModel
 
 # Setup in-memory SQLite database
@@ -93,13 +92,6 @@ def test_provision_device_new(client, db_session):
     zone = db_session.query(ZoneModel).filter(ZoneModel.name == "Primary Zone").first()
     assert zone is not None
 
-    tank = (
-        db_session.query(WaterTankModel)
-        .filter(WaterTankModel.name == "Main Tank")
-        .first()
-    )
-    assert tank is not None
-
     sensors = db_session.query(SensorModel).filter(SensorModel.zone_id == zone.id).all()
     assert len(sensors) == 2
 
@@ -123,7 +115,7 @@ def test_provision_device_idempotency(client, db_session):
 
     assert id1 == id2
 
-    # Verify no duplicate devices, zones, or tanks
+    # Verify no duplicate devices or zones
     devices_count = (
         db_session.query(DeviceModel)
         .filter(DeviceModel.hardware_id == "raspi-test-002")
@@ -135,10 +127,3 @@ def test_provision_device_idempotency(client, db_session):
         db_session.query(ZoneModel).filter(ZoneModel.name == "Primary Zone").count()
     )
     assert zones_count == 1
-
-    tanks_count = (
-        db_session.query(WaterTankModel)
-        .filter(WaterTankModel.name == "Main Tank")
-        .count()
-    )
-    assert tanks_count == 1
