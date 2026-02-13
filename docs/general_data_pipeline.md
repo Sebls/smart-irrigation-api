@@ -169,9 +169,6 @@ All still **append-only**, no domain mutation.
 * **Logs**
   * Route: `POST /api/v1/external-devices/{device_id}/logs`
   * Stored in `device_logs` model for diagnostics.
-* **Water Tank Readings**
-  * Route: `POST /api/v1/water/readings/`
-  * Stored in `water_tank_readings` for tank level monitoring.
 * **Heartbeats**
   * Route: `GET /api/v1/external-devices/{device_id}/status`
   * Returns online status and last seen timestamp.
@@ -220,7 +217,6 @@ Views combine:
 * domain tables (`zones`, `plants`, `sensors`)
 * latest readings
 * irrigation jobs
-* aggregated water usage
 
 Examples:
 
@@ -238,7 +234,6 @@ Now the UI queries:
 * `/overview` → summary from views
 * `/zones` → zone cards from views
 * `/sensors` → current values + trends
-* `/water` → aggregated tables
 * `/activity` → `activity_events`
 
 At this point:
@@ -261,7 +256,7 @@ Telemetry / images / logs (data plane)
    → sensor_readings (facts)
    ↓
 Aggregation jobs (analytics plane)
-   → water_usage_daily, hourly, etc.
+   → derived insights (trends, health, alerts)
    ↓
 Views & queries (read plane)
    → dashboard
