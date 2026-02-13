@@ -12,64 +12,30 @@ The system follows a hierarchical data model:
 
 The API is intended to be consumed by a frontend dashboard and other services; it does not communicate directly with hardware devices.
 
-## Project structure
-
-This project uses a modular FastAPI layout that scales well as the codebase grows.
-
-```text
-alembic/                   # Alembic migrations
-  env.py
-  versions/                # Alembic versions
-alembic.ini
-app/
-  __init__.py
-  main.py                  # Application entrypoint (imports API app)
-  api/                      # API layer (FastAPI app factory + routers/schemas/services)
-    __init__.py
-    main.py
-    dependencies.py         # Shared dependencies (e.g., DB session)
-    routers/
-      __init__.py
-    schemas/
-      __init__.py
-    services/
-      __init__.py
-  config/                   # App-level configuration package
-    __init__.py
-  infrastructure/           # Infrastructure layer (config/security/db/models)
-    __init__.py
+```
+alembic
+app
+  api                    # API layer (FastAPI)
+    main.py            # API app factory
+    dependencies.py
+    routers/           # HTTP endpoints
+    schemas/           # Pydantic DTOs
+    services/          # Business logic
+    utils
+  config                 # Environment handling
+    env.py
+  infrastructure         # Infra layer (DB, security, config)
     config.py
     security.py
-    db/                     # Database engine/session setup + migrations placeholder
-      __init__.py
-      base.py
-      database.py
-      migrations/
-        README.md
-    models/                 # SQLAlchemy models
-      __init__.py
-      _mixins.py
-      activity.py
-      irrigation.py
-      plants.py
-      sensor_readings.py
-      sensors.py
-      water.py
-      zones.py
-docs/                      # API + DB documentation
-tests/
-  __init__.py
-  conftest.py
-  test_main.py
+    db/
+    models/            # SQLAlchemy models
+  main.py                # Entrypoint (imports API)
+docs                       # Technical documentation
+tests                      # Pytest test suite
+  api/
   config/
-    test_config.py
   infrastructure/
-    test_config_shim.py
-    test_database.py
-    test_security.py
-requirements.txt
-run.sh
-smart_irrigation.db
+  test_main.py
 ```
 
 Notes:
