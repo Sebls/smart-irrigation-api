@@ -17,7 +17,6 @@ class ZoneModel(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin):
     sensors: Mapped[list["SensorModel"]] = relationship(back_populates="zone")
     irrigation_jobs: Mapped[list["IrrigationJobModel"]] = relationship(back_populates="zone")
     activity_events: Mapped[list["ActivityEventModel"]] = relationship(back_populates="zone")
-    zone_water_usage_daily: Mapped[list["ZoneWaterUsageDailyModel"]] = relationship(back_populates="zone")
 
     __table_args__ = (
         Index("idx_zones_active", "is_active"),

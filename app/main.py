@@ -6,8 +6,9 @@ from app.api.routers import (
     sensors,
     sensor_readings,
     activity,
-    water,
     irrigation,
+    devices,
+    external_devices,
 )
 
 
@@ -21,8 +22,9 @@ def create_app() -> FastAPI:
     api_router.include_router(sensors.router)
     api_router.include_router(sensor_readings.router)
     api_router.include_router(activity.router)
-    api_router.include_router(water.router)
     api_router.include_router(irrigation.router)
+    api_router.include_router(devices.router)
+    api_router.include_router(external_devices.router)
 
     app.include_router(api_router)
 

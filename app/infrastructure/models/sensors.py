@@ -38,7 +38,8 @@ class SensorModel(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin):
 
     __table_args__ = (
         CheckConstraint(
-            "type in ('humidity','temperature','air-quality')", name="ck_sensors_type"
+            "type in ('humidity','temperature','air-quality','water-level','flow')",
+            name="ck_sensors_type",
         ),
         # Exactly one parent: plant_id or zone_id
         CheckConstraint(
