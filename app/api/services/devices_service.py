@@ -2,6 +2,8 @@ import json
 import logging
 import uuid
 from datetime import datetime
+from pathlib import Path
+import mimetypes
 from sqlalchemy.orm import Session
 from fastapi import UploadFile
 from app.infrastructure.models.devices import (
@@ -31,6 +33,23 @@ from app.api.schemas.devices import (
 
 
 logger = logging.getLogger(__name__)
+
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+_UPLOADS_ROOT = (_REPO_ROOT / "uploads").resolve()
+
+
+def _resolve_image_path(image_url: str) -> Path:
+    """
+    Resolve a DB `image_url` (relative or absolute) into an absolute path and
+    ensure it stays within the `uploads/` directory for safety.
+    """
+    candidate = Path(image_url)
+    abs_path = (candidate if candidate.is_absolute() else (_REPO_ROOT / candidate)).resolve()
+
+    if abs_path != _UPLOADS_ROOT and _UPLOADS_ROOT not in abs_path.parents:
+        raise ValueError("Invalid image path (outside uploads directory)")
+
+    return abs_path
 
 
 def _get_or_create_device(db: Session, device_uuid: uuid.UUID) -> DeviceModel:
@@ -134,13 +153,15 @@ def save_image(
     _get_or_create_device(db, device_id)
 
     # 1. Prepare Storage
-    upload_dir = os.path.join("uploads", "devices", str(device_id))
-    os.makedirs(upload_dir, exist_ok=True)
-    file_path = os.path.join(upload_dir, f"{image_type}.jpg")
+    upload_dir_rel = os.path.join("uploads", "devices", str(device_id))
+    upload_dir_abs = (_REPO_ROOT / upload_dir_rel).resolve()
+    os.makedirs(upload_dir_abs, exist_ok=True)
+    file_path_rel = os.path.join(upload_dir_rel, f"{image_type}.jpg")
+    file_path_abs = (_REPO_ROOT / file_path_rel).resolve()
 
     # 2. Save Image File
     try:
-        with open(file_path, "wb") as f:
+        with open(file_path_abs, "wb") as f:
             f.write(image_file.file.read())
     except Exception as e:
         logger.error(f"Failed to save image to disk: {str(e)}")
@@ -159,7 +180,7 @@ def save_image(
     if db_image:
         db_image.plant_id = plant_id
         db_image.zone_id = zone_id
-        db_image.image_url = file_path
+        db_image.image_url = file_path_rel
         db_image.captured_at = captured_at
         db_image.metadata_json = json.dumps(metadata) if metadata else None
     else:
@@ -167,7 +188,7 @@ def save_image(
             device_id=device_id,
             plant_id=plant_id,
             zone_id=zone_id,
-            image_url=file_path,
+            image_url=file_path_rel,
             type=image_type,
             captured_at=captured_at,
             metadata_json=json.dumps(metadata) if metadata else None,
@@ -186,6 +207,96 @@ def save_image(
         type=db_image.type,
         captured_at=db_image.captured_at,
     )
+
+
+def list_device_images(db: Session, device_id: uuid.UUID) -> list[DeviceImageResponse]:
+    images = (
+        db.query(DeviceImageModel)
+        .filter(DeviceImageModel.device_id == device_id)
+        .order_by(DeviceImageModel.captured_at.desc())
+        .all()
+    )
+    return [
+        DeviceImageResponse(
+            id=img.id,
+            device_id=img.device_id,
+            plant_id=img.plant_id,
+            zone_id=img.zone_id,
+            image_url=img.image_url,
+            type=img.type,
+            captured_at=img.captured_at,
+        )
+        for img in images
+    ]
+
+
+def get_device_image(db: Session, device_id: uuid.UUID, image_id: uuid.UUID) -> DeviceImageResponse | None:
+    img = (
+        db.query(DeviceImageModel)
+        .filter(DeviceImageModel.id == image_id, DeviceImageModel.device_id == device_id)
+        .first()
+    )
+    if not img:
+        return None
+    return DeviceImageResponse(
+        id=img.id,
+        device_id=img.device_id,
+        plant_id=img.plant_id,
+        zone_id=img.zone_id,
+        image_url=img.image_url,
+        type=img.type,
+        captured_at=img.captured_at,
+    )
+
+
+def get_device_image_file(
+    db: Session, device_id: uuid.UUID, image_id: uuid.UUID
+) -> tuple[str, str, str]:
+    """
+    Returns (absolute_path, media_type, filename) for an image belonging to `device_id`.
+    """
+    img = (
+        db.query(DeviceImageModel)
+        .filter(DeviceImageModel.id == image_id, DeviceImageModel.device_id == device_id)
+        .first()
+    )
+    if not img:
+        raise FileNotFoundError("Image not found")
+
+    abs_path = _resolve_image_path(img.image_url)
+    if not abs_path.exists() or not abs_path.is_file():
+        raise FileNotFoundError("Image file not found on disk")
+
+    media_type = mimetypes.guess_type(str(abs_path))[0] or "application/octet-stream"
+    safe_type = (img.type or "image").replace("/", "-")
+    filename = f"{device_id}-{safe_type}.jpg"
+    return str(abs_path), media_type, filename
+
+
+def get_device_image_file_by_type(
+    db: Session, device_id: uuid.UUID, image_type: str
+) -> tuple[str, str, str]:
+    """
+    Returns (absolute_path, media_type, filename) for the latest image of `image_type`.
+    Note: current ingestion upserts one row per type, so this generally returns the single record.
+    """
+    img = (
+        db.query(DeviceImageModel)
+        .filter(DeviceImageModel.device_id == device_id, DeviceImageModel.type == image_type)
+        .order_by(DeviceImageModel.captured_at.desc())
+        .first()
+    )
+    if not img:
+        raise FileNotFoundError("Image not found")
+
+    abs_path = _resolve_image_path(img.image_url)
+    if not abs_path.exists() or not abs_path.is_file():
+        raise FileNotFoundError("Image file not found on disk")
+
+    media_type = mimetypes.guess_type(str(abs_path))[0] or "application/octet-stream"
+    safe_type = (img.type or "image").replace("/", "-")
+    filename = f"{device_id}-{safe_type}.jpg"
+    return str(abs_path), media_type, filename
 
 
 def get_device_status(db: Session, device_id: uuid.UUID) -> DeviceStatusResponse:
